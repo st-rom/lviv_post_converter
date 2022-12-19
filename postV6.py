@@ -22,12 +22,20 @@ LATIN = ['a', 'b', 'v', 'h', 'g', 'd', 'e', 'je', 'jo',  # Symbols they are gonn
 
 
 class FolderConverter:
+    """
+    Class for image files in the folder
+    """
     def __init__(self, **kwargs):
-        self.dir_path = kwargs['dirname']
-        self.vprint = print if kwargs['verbose'] else lambda *a, **k: None
+        self.dir_path = kwargs['dirname']  # name of the directory that will be copied
+        self.vprint = print if kwargs['verbose'] else lambda *a, **k: None  # prints only if --verbose was passed
 
     @staticmethod
-    def cyrillic_to_latin(name):
+    def cyrillic_to_latin(name: str) -> str:
+        """
+        Replaces cyrillic characters in string with latin ones
+        :param name: str, name of the file
+        :return: str, updated name of the file
+        """
         new_name = ''
         for letter in name:
             if letter.lower() in CYRILLIC:
@@ -38,28 +46,28 @@ class FolderConverter:
     def convert(self):
         if not self.dir_path or not os.path.isdir(self.dir_path):
             self.vprint('Wrong path "{}" selected. Try again'.format(self.dir_path))
-            return 0
+            return
         new_dir = self.dir_path + '_copy'
         i = 1
-        while os.path.exists(new_dir):
+        while os.path.exists(new_dir):  # trying to find unique name for copied dir
             new_dir = self.dir_path + '_copy({})'.format(i)
             i += 1
         self.vprint('Copying and converting files from {} to folder {}'.format(self.dir_path, new_dir))
-        shutil.copytree(self.dir_path, new_dir)
+        shutil.copytree(self.dir_path, new_dir)  # copies whole directory recursively
 
-        files = list(pathlib.Path(new_dir).rglob("*"))
-        for file in files:
+        files = list(pathlib.Path(new_dir).rglob("*"))  # selects all the files in new directory
+        for file in files:  # iterating through all files in copied dir
             try:
-                image = Image.open(file)
-                self.vprint(f"Original size of {file} : {image.size}")  # 5464x3640
+                image = Image.open(file)  # trying to read an image file
+                self.vprint(f"Original size of {file} : {image.size}")
 
-                image.thumbnail((PIXELS, PIXELS), Image.Resampling.LANCZOS)
-                self.vprint(f"New size : {image.size}")  # 5464x3640
-                new_name = self.cyrillic_to_latin(str(file))
-                image.save(new_name, "JPEG")
-                if new_name != str(file):
+                image.thumbnail((PIXELS, PIXELS), Image.Resampling.LANCZOS)  # resizing image with same aspect ratio
+                self.vprint(f"New size : {image.size}")
+                new_name = self.cyrillic_to_latin(str(file))  # renames the file if necessary
+                image.save(new_name, "JPEG")  # creating new image
+                if new_name != str(file):  # if new name differs from the old we should delete old file(to avoid copies)
                     os.remove(file)
-            except IOError:
+            except IOError:  # ignoring non-image files
                 pass
         self.vprint('Done!')
 
@@ -73,7 +81,7 @@ if __name__ == '__main__':
     parser.add_argument('--verbose', action='store_true', help="increase output verbosity")
 
     args = parser.parse_args()
-    if not args.dirname:
+    if not args.dirname:  # if directory was not passed through args, you will have to choose it manually
         root = Tk()
         root.withdraw()
 
