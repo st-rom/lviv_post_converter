@@ -6,7 +6,7 @@ import os
 import pathlib
 import shutil
 
-from PIL import Image
+from PIL import Image, UnidentifiedImageError
 from tkinter import Tk, filedialog
 
 
@@ -30,18 +30,21 @@ class FolderConverter:
         self.vprint = print if kwargs['verbose'] else lambda *a, **k: None  # prints only if --verbose was passed
 
     @staticmethod
-    def cyrillic_to_latin(name: str) -> str:
+    def cyrillic_to_latin(path_string: str) -> str:
         """
         Replaces cyrillic characters in string with latin ones
-        :param name: str, name of the file
-        :return: str, updated name of the file
+        :param path_string: str, path to the file
+        :return: str, updated path to the file
         """
+        names = path_string.split(os.sep)
+        name = names.pop(-1)  # retrieving the name of file itself
         new_name = ''
-        for letter in name:
+        for letter in name:  # renaming it
             if letter.lower() in CYRILLIC:
                 letter = LATIN[CYRILLIC.index(letter.lower())]
             new_name += letter
-        return new_name
+        names.append(new_name)
+        return os.path.join(*names)  # putting path back together
 
     def convert(self):
         if not self.dir_path or not os.path.isdir(self.dir_path):
@@ -64,10 +67,10 @@ class FolderConverter:
                 image.thumbnail((PIXELS, PIXELS), Image.Resampling.LANCZOS)  # resizing image with same aspect ratio
                 self.vprint(f"New size : {image.size}")
                 new_name = self.cyrillic_to_latin(str(file))  # renames the file if necessary
-                image.save(new_name, "JPEG")  # creating new image
+                image.save(new_name)  # creating new image
                 if new_name != str(file):  # if new name differs from the old we should delete old file(to avoid copies)
                     os.remove(file)
-            except IOError:  # ignoring non-image files
+            except (UnidentifiedImageError, IsADirectoryError):  # ignoring non-image files
                 pass
         self.vprint('Done!')
 
@@ -86,5 +89,6 @@ if __name__ == '__main__':
         root.withdraw()
 
         args.dirname = filedialog.askdirectory()
+    args.dirname = args.dirname.rstrip('\\/')  # removing trailing slashes
     fc = FolderConverter(**vars(args))
     fc.convert()

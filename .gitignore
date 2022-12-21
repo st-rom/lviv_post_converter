@@ -2,5 +2,5 @@
 build/
 dist/
 venv/
-test_example/
+test_example*
 LvivPostConverter.spec
