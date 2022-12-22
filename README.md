@@ -3,6 +3,7 @@ This script copies a selected directory, renames all image files with cyrillic n
 
 To generate .exe file on Windows run the following code in downloaded project directory:
 ```
+pip3 install virtualenv
 python3 -m venv venv
 venv\Scripts\activate.bat
 pip install -r requirements.txt

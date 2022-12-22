@@ -44,11 +44,17 @@ class FolderConverter:
                 letter = LATIN[CYRILLIC.index(letter.lower())]
             new_name += letter
         names.append(new_name)
-        return os.path.join(*names)  # putting path back together
+        new_path = os.path.join(*names)  # putting path back together
+        if path_string.startswith(os.sep):  # add slash at the start if necessary
+            new_path = os.sep + new_path
+        return new_path
 
     def convert(self):
         if not self.dir_path or not os.path.isdir(self.dir_path):
-            self.vprint('Wrong path "{}" selected. Try again'.format(self.dir_path))
+            print('Wrong path "{}" selected. Try again'.format(self.dir_path))
+            return
+        if sum(f.stat().st_size for f in pathlib.Path(self.dir_path).glob('**/*') if f.is_file()) > 1000000000:
+            print('Selected directory is too big')  # if directory size is bigger than 1Gb we abort
             return
         new_dir = self.dir_path + '_copy'
         i = 1
@@ -62,12 +68,12 @@ class FolderConverter:
         for file in files:  # iterating through all files in copied dir
             try:
                 image = Image.open(file)  # trying to read an image file
-                self.vprint(f"Original size of {file} : {image.size}")
+                self.vprint(f"Original size of {file}: {image.size}")
 
                 image.thumbnail((PIXELS, PIXELS), Image.Resampling.LANCZOS)  # resizing image with same aspect ratio
-                self.vprint(f"New size : {image.size}")
                 new_name = self.cyrillic_to_latin(str(file))  # renames the file if necessary
                 image.save(new_name)  # creating new image
+                self.vprint(f"New size of {new_name}: {image.size}")
                 if new_name != str(file):  # if new name differs from the old we should delete old file(to avoid copies)
                     os.remove(file)
             except (UnidentifiedImageError, IsADirectoryError):  # ignoring non-image files
