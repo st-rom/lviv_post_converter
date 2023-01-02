@@ -29,8 +29,7 @@ class FolderConverter:
         self.dir_path = kwargs['dirname']  # name of the directory that will be copied
         self.vprint = print if kwargs['verbose'] else lambda *a, **k: None  # prints only if --verbose was passed
 
-    @staticmethod
-    def cyrillic_to_latin(path_string: str) -> str:
+    def cyrillic_to_latin(self, path_string: str) -> str:
         """
         Replaces cyrillic characters in string with latin ones
         :param path_string: str, path to the file
@@ -44,9 +43,10 @@ class FolderConverter:
                 letter = LATIN[CYRILLIC.index(letter.lower())]
             new_name += letter
         names.append(new_name)
-        new_path = os.path.join(*names)  # putting path back together
+        new_path = os.sep.join(names)  # putting path back together
         if path_string.startswith(os.sep):  # add slash at the start if necessary
             new_path = os.sep + new_path
+        self.vprint(f"Working on {new_path}")
         return new_path
 
     def convert(self):
