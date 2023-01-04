@@ -76,7 +76,7 @@ class FolderConverter:
                 self.vprint(f"New size of {new_name}: {image.size}")
                 if new_name != str(file):  # if new name differs from the old we should delete old file(to avoid copies)
                     os.remove(file)
-            except (UnidentifiedImageError, IsADirectoryError):  # ignoring non-image files
+            except (UnidentifiedImageError, IsADirectoryError, PermissionError):  # ignoring non-image files
                 pass
         self.vprint('Done!')
 
