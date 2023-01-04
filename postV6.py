@@ -123,10 +123,10 @@ class FolderConverter:
                     os.remove(file)
             except (UnidentifiedImageError, IsADirectoryError, PermissionError):  # ignoring non-image files
                 pass
-            except Exception as e:  # error window if error
-                if self.windowed:
+            except Exception as e:
+                if self.windowed:  # error window if error
                     messagebox.showerror('Error',  str(e))
-                shutil.rmtree(new_dir)
+                shutil.rmtree(new_dir)  # remove copied folder
                 raise e
         if self.windowed:
             messagebox.showinfo('Success', 'Success!')  # confirmation that operation was successful
