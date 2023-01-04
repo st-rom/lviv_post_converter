@@ -128,8 +128,8 @@ class FolderConverter:
                     messagebox.showerror('Error',  str(e))
                 shutil.rmtree(new_dir)  # remove copied folder
                 raise e
-        if self.windowed:
-            messagebox.showinfo('Success', 'Success!')  # confirmation that operation was successful
+        if self.windowed:  # confirmation that operation was successful
+            messagebox.showinfo('Success', 'Успіх! Вдалої та легкої роботи на номером!')
         self.vprint('Done!')
 
 
