@@ -88,6 +88,9 @@ class FolderConverter:
         return new_path
 
     def convert(self):
+        """
+        Creates new copied folder and replaces old image files with new updated ones
+        """
         if not self.dir_path or not os.path.isdir(self.dir_path):
             if self.windowed:
                 messagebox.showerror('Error',  'Wrong path "{}" selected. Try again'.format(self.dir_path))
@@ -141,7 +144,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
     is_windowed = False
     if not args.dirname:  # if directory was not passed through args, you will have to choose it manually
-        is_windowed = True
+        is_windowed = True  # from now on message boxes are activated
         root = Tk()
         root.withdraw()
 
