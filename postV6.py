@@ -7,25 +7,59 @@ import pathlib
 import shutil
 
 from PIL import Image, UnidentifiedImageError
-from tkinter import Tk, filedialog
+from tkinter import Tk, filedialog, messagebox
 
 
 PIXELS = 600  # max width and height in pixels
-CYRILLIC = ['а', 'б', 'в', 'г', 'ґ', 'д', 'е', 'є', 'ё',  # All symbols required to be changed
-            'ж', 'з', 'и', 'і', 'ї', 'й', 'к', 'л', 'м',
-            'н', 'о', 'п', 'р', 'с', 'т', 'у', 'ф', 'х',
-            'ц', 'ч', 'ш', 'щ', 'ъ', 'ы', 'ь', 'э', 'ю', 'я', "'", '`', '"', ' ']
-LATIN = ['a', 'b', 'v', 'h', 'g', 'd', 'e', 'je', 'jo',  # Symbols they are gonna be changed to
-         'zh', 'z', 'y', 'i', 'ji', 'j', 'k', 'l', 'm',
-         'n', 'o', 'p', 'r', 's', 't', 'u', 'f', 'h',
-         'z', 'ch', 'sh', 'sh4', "", 'y', "", 'e', 'ju', 'ja', '', '', '', '_']
+CYR_TO_LAT_DICT = {  # All the symbols required to be changed
+    'А': 'A', 'а': 'a',
+    'Б': 'B', 'б': 'b',
+    'В': 'V', 'в': 'v',
+    'Г': 'H', 'г': 'h',
+    'Ґ': 'G', 'ґ': 'g',
+    'Д': 'D', 'д': 'd',
+    'Е': 'E', 'е': 'e',
+    'Є': 'Ye', 'є': 'ie',
+    'Ж': 'Zh', 'ж': 'zh',
+    'З': 'Z', 'з': 'z',
+    'И': 'Y', 'и': 'y',
+    'І': 'I', 'і': 'i',
+    'Ї': 'Yi', 'ї': 'i',
+    'Й': 'Y', 'й': 'i',
+    'К': 'K', 'к': 'k',
+    'Л': 'L', 'л': 'l',
+    'М': 'M', 'м': 'm',
+    'Н': 'N', 'н': 'n',
+    'О': 'O', 'о': 'o',
+    'П': 'P', 'п': 'p',
+    'Р': 'R', 'р': 'r',
+    'С': 'S', 'с': 's',
+    'Т': 'T', 'т': 't',
+    'У': 'U', 'у': 'u',
+    'Ф': 'F', 'ф': 'f',
+    'Х': 'Kh', 'х': 'kh',
+    'Ц': 'Ts', 'ц': 'ts',
+    'Ч': 'Ch', 'ч': 'ch',
+    'Ш': 'Sh', 'ш': 'sh',
+    'Щ': 'Shch', 'щ': 'shch',
+    'Ь': '', 'ь': '',
+    'Ю': 'Yu', 'ю': 'iu',
+    'Я': 'Ya', 'я': 'ia',
+    'Ъ': '', 'ъ': '',
+    'Ы': 'Y', 'ы': 'y',
+    'Ё': 'Yo', 'ё': 'io',
+    'Э': 'E', 'э': 'e',
+    "'": '', '`': '',
+    '"': '', ' ': '_'
+}
 
 
 class FolderConverter:
     """
     Class for image files in the folder
     """
-    def __init__(self, **kwargs):
+    def __init__(self, windowed=False, **kwargs):
+        self.windowed = windowed
         self.dir_path = kwargs['dirname']  # name of the directory that will be copied
         self.vprint = print if kwargs['verbose'] else lambda *a, **k: None  # prints only if --verbose was passed
 
@@ -39,9 +73,7 @@ class FolderConverter:
         name = names.pop(-1)  # retrieving the name of file itself
         new_name = ''
         for letter in name:  # renaming it
-            if letter.lower() in CYRILLIC:
-                letter = LATIN[CYRILLIC.index(letter.lower())]
-            new_name += letter
+            new_name += CYR_TO_LAT_DICT.get(letter, letter)
         names.append(new_name)
         new_path = os.sep.join(names)  # putting path back together
         if path_string.startswith(os.sep):  # add slash at the start if necessary
@@ -51,10 +83,14 @@ class FolderConverter:
 
     def convert(self):
         if not self.dir_path or not os.path.isdir(self.dir_path):
+            if self.windowed:
+                messagebox.showerror('Error',  'Wrong path "{}" selected. Try again'.format(self.dir_path))
             print('Wrong path "{}" selected. Try again'.format(self.dir_path))
             return
         if sum(f.stat().st_size for f in pathlib.Path(self.dir_path).glob('**/*') if f.is_file()) > 1000000000:
-            print('Selected directory is too big')  # if directory size is bigger than 1Gb we abort
+            if self.windowed:
+                messagebox.showerror('Error',  'Selected directory is too big (max 1Gb)')
+            print('Selected directory is too big (max 1 Gb)')  # if directory size is bigger than 1Gb we abort
             return
         new_dir = self.dir_path + '_copy'
         i = 1
@@ -78,6 +114,13 @@ class FolderConverter:
                     os.remove(file)
             except (UnidentifiedImageError, IsADirectoryError, PermissionError):  # ignoring non-image files
                 pass
+            except Exception as e:  # error window if error
+                if self.windowed:
+                    messagebox.showerror('Error',  str(e))
+                shutil.rmtree(new_dir)
+                raise e
+        if self.windowed:
+            messagebox.showinfo('Success', 'Success!')  # confirmation that operation was successful
         self.vprint('Done!')
 
 
@@ -90,11 +133,13 @@ if __name__ == '__main__':
     parser.add_argument('--verbose', action='store_true', help="increase output verbosity")
 
     args = parser.parse_args()
+    is_windowed = False
     if not args.dirname:  # if directory was not passed through args, you will have to choose it manually
+        is_windowed = True
         root = Tk()
         root.withdraw()
 
         args.dirname = filedialog.askdirectory()
-    args.dirname = args.dirname.rstrip('\\/')  # removing trailing slashes
-    fc = FolderConverter(**vars(args))
+    args.dirname = args.dirname.rstrip(os.sep)  # removing trailing slashes
+    fc = FolderConverter(windowed=is_windowed, **vars(args))
     fc.convert()
