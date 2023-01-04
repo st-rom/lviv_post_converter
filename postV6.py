@@ -58,8 +58,14 @@ class FolderConverter:
     """
     Class for image files in the folder
     """
-    def __init__(self, windowed=False, **kwargs):
-        self.windowed = windowed
+    def __init__(self, windowed: bool, **kwargs):
+        """
+        Initiates class variables
+        :param windowed: bool, if True, the program has GUI and will show message boxes
+        :param dir_path: str, path to the directory that will be processed
+        :param vprint: bool, if True, prints information on every important step
+        """
+        self.windowed = windowed  # is in tkinter window
         self.dir_path = kwargs['dirname']  # name of the directory that will be copied
         self.vprint = print if kwargs['verbose'] else lambda *a, **k: None  # prints only if --verbose was passed
 
