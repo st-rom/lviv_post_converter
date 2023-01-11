@@ -122,14 +122,15 @@ class FolderConverter:
                 if new_name != str(file):  # if new name differs from the old we should delete old file(to avoid copies)
                     os.remove(file)
             except (UnidentifiedImageError, IsADirectoryError, PermissionError):  # ignoring non-image files
-                pass
+                if not os.path.isdir(file):
+                    os.remove(file)
             except Exception as e:
                 if self.windowed:  # error window if error
                     messagebox.showerror('Error',  str(e))
                 shutil.rmtree(new_dir)  # remove copied folder
                 raise e
         if self.windowed:  # confirmation that operation was successful
-            messagebox.showinfo('Success', 'Успіх! Вдалої та легкої роботи на номером!')
+            messagebox.showinfo('Success', 'Успіх! Вдалої та легкої роботи над номером!')
         self.vprint('Done!')
 
 
